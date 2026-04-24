@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"os/user"
 	"strings"
 
@@ -75,12 +76,16 @@ func main() {
 		cmdName := parts[0]
 		args := parts[1:]
 
+		// 先查找内部命令
 		if cmd, exists := cmds.GetCommand(cmdName); exists {
 			if err := cmd.Execute(args); err != nil {
 				fmt.Printf("%s错误: %v%s\n", colorRed, err, colorReset)
 			}
 		} else {
-			fmt.Printf("%s未知命令: %s，输入 'help' 查看可用命令%s\n", colorRed, cmdName, colorReset)
+			// 尝试作为外部命令执行
+			if err := executeExternalCommand(cmdName, args); err != nil {
+				fmt.Printf("%s未知命令: %s，输入 'help' 查看可用命令%s\n", colorRed, cmdName, colorReset)
+			}
 		}
 	}
 }
@@ -91,4 +96,22 @@ func simplifyPath(path, homeDir string) string {
 		return "~" + strings.TrimPrefix(path, homeDir)
 	}
 	return path
+}
+
+// executeExternalCommand 执行外部系统命令
+func executeExternalCommand(name string, args []string) error {
+	cmd := exec.Command(name, args...)
+
+	// 设置标准输入输出
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	// 执行命令
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
