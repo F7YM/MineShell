@@ -16,7 +16,7 @@ func (h *HelpCommand) Name() string {
 }
 
 func (h *HelpCommand) Execute(args []string) error {
-	fmt.Println("可用命令:")
+	fmt.Println("可用的内建命令:")
 
 	commands := GetAllCommands()
 	// 按命令名排序

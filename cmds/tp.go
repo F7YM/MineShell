@@ -38,5 +38,5 @@ func (t *TPCommand) Execute(args []string) error {
 }
 
 func (t *TPCommand) Help() string {
-	return "tp <路径> - 传送（切换目录）"
+	return "切换工作目录"
 }
