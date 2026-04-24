@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/user"
 	"strings"
 
 	"github.com/F7YM/MineShell/cmds"
@@ -16,12 +17,22 @@ func main() {
 	fmt.Print("输入 'help' 查看命令，'exit' 退出\n\n")
 
 	for {
-		// 获取当前工作目录作为提示符
+		// 工作目录
 		wd, err := os.Getwd()
 		if err != nil {
 			wd = "?"
 		}
-		fmt.Printf("%s> ", wd)
+		// 当前用户
+		userName, err := user.Current()
+		if err != nil {
+			userName = &user.User{}
+		}
+		// 主机名
+		host, err := os.Hostname()
+		if err != nil {
+			host = "?"
+		}
+		fmt.Printf("%s@%s:%s> ", userName.Username, host, wd)
 
 		if !scanner.Scan() {
 			break // 遇到 EOF 或错误时退出
