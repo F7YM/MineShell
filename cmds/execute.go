@@ -22,7 +22,6 @@ func (e *ExecuteCommand) Execute(args []string) error {
 		return fmt.Errorf("用法: execute as <用户> run <命令> 或 execute run <命令>")
 	}
 
-	// 解析 execute 子命令
 	switch args[0] {
 	case "as":
 		if len(args) < 4 || args[2] != "run" {
@@ -61,43 +60,48 @@ func executeAs(player string, command string) error {
 		return executeRun(command)
 	}
 
-	// 尝试使用 sudo 切换用户
-	if player != currentUser {
-		cmd := exec.Command("sudo", "-u", player, "sh", "-c", command)
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		return cmd.Run()
+	// 获取当前可执行文件路径
+	execPath, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("无法获取可执行文件路径: %v", err)
 	}
 
-	return executeRun(command)
+	// 使用 sudo 重新调用自身执行命令
+	cmd := exec.Command("sudo", "-u", player, execPath, "-c", command)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return cmd.Run()
 }
 
-// executeRun 直接执行系统命令
+// executeRun 直接执行命令
 func executeRun(command string) error {
-	// 分割命令和参数
+	// 先尝试解析为 MineShell 内建命令
 	parts := strings.Fields(command)
 	if len(parts) == 0 {
 		return fmt.Errorf("没有指定命令")
 	}
 
 	cmdName := parts[0]
-	var args []string
-	if len(parts) > 1 {
-		args = parts[1:]
+	args := parts[1:]
+
+	// 检查是否是内建命令
+	if cmd, exists := GetCommand(cmdName); exists {
+		// 内建命令直接执行
+		return cmd.Execute(args)
 	}
 
-	// 查找命令路径
+	// 不是内建命令，作为系统命令执行
 	cmdPath, err := exec.LookPath(cmdName)
 	if err != nil {
 		return fmt.Errorf("找不到命令: %s", cmdName)
 	}
 
-	// 执行命令
-	cmd := exec.Command(cmdPath, args...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	sysCmd := exec.Command(cmdPath, args...)
+	sysCmd.Stdin = os.Stdin
+	sysCmd.Stdout = os.Stdout
+	sysCmd.Stderr = os.Stderr
 
-	return cmd.Run()
+	return sysCmd.Run()
 }
