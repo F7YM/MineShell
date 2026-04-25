@@ -25,6 +25,9 @@ func (e *ExecuteCommand) Execute(args []string) error {
 	var user string
 	var dir string
 	var command string
+	hasAs := false
+	hasAt := false
+	hasRun := false
 
 	// 解析 as, at, run
 	i := 0
@@ -32,30 +35,46 @@ func (e *ExecuteCommand) Execute(args []string) error {
 	for i < n {
 		switch args[i] {
 		case "as":
+			if hasAs {
+				return fmt.Errorf("重复的子命令: as")
+			}
 			if i+1 >= n {
 				return fmt.Errorf("缺少用户名")
 			}
 			user = args[i+1]
+			hasAs = true
 			i += 2
 		case "at":
+			if hasAt {
+				return fmt.Errorf("重复的子命令: at")
+			}
 			if i+1 >= n {
 				return fmt.Errorf("缺少目录")
 			}
 			dir = args[i+1]
+			hasAt = true
 			i += 2
 		case "run":
+			if hasRun {
+				return fmt.Errorf("重复的子命令: run")
+			}
 			if i+1 >= n {
 				return fmt.Errorf("缺少命令")
 			}
 			command = strings.Join(args[i+1:], " ")
+			hasRun = true
 			i = n
 		default:
 			return fmt.Errorf("未知子命令: %s，可用: as, at, run", args[i])
 		}
 	}
 
-	if command == "" {
+	if !hasRun {
 		return fmt.Errorf("缺少 run 子命令")
+	}
+
+	if command == "" {
+		return fmt.Errorf("run 后面缺少命令")
 	}
 
 	return executeWithOptions(user, dir, command)
