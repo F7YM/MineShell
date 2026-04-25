@@ -19,14 +19,14 @@ func (e *ExecuteCommand) Name() string {
 
 func (e *ExecuteCommand) Execute(args []string) error {
 	if len(args) < 2 {
-		return fmt.Errorf("用法: execute as <玩家> run <命令> 或 execute run <命令>")
+		return fmt.Errorf("用法: execute as <用户> run <命令> 或 execute run <命令>")
 	}
 
 	// 解析 execute 子命令
 	switch args[0] {
 	case "as":
 		if len(args) < 4 || args[2] != "run" {
-			return fmt.Errorf("用法: execute as <玩家> run <命令>")
+			return fmt.Errorf("用法: execute as <用户> run <命令>")
 		}
 		player := args[1]
 		command := strings.Join(args[3:], " ")
@@ -56,7 +56,7 @@ func executeAs(player string, command string) error {
 		currentUser = os.Getenv("USERNAME")
 	}
 
-	// 如果玩家就是当前用户，直接执行
+	// 是当前用户，直接执行
 	if player == currentUser || player == "@s" {
 		return executeRun(command)
 	}
