@@ -19,46 +19,60 @@ func (e *ExecuteCommand) Name() string {
 
 func (e *ExecuteCommand) Execute(args []string) error {
 	if len(args) < 2 {
-		return fmt.Errorf("用法: execute as <用户> run <命令> 或 execute run <命令>")
+		return fmt.Errorf("用法: execute as <用户> run <命令> 或 execute at <目录> run <命令> 或 execute as <用户> at <目录> run <命令>")
 	}
 
-	switch args[0] {
-	case "as":
-		if len(args) < 4 || args[2] != "run" {
-			return fmt.Errorf("用法: execute as <用户> run <命令>")
-		}
-		player := args[1]
-		command := strings.Join(args[3:], " ")
-		return executeAs(player, command)
+	var user string
+	var dir string
+	var command string
 
-	case "run":
-		if len(args) < 2 {
-			return fmt.Errorf("用法: execute run <命令>")
+	// 解析 as, at, run
+	i := 0
+	n := len(args)
+	for i < n {
+		switch args[i] {
+		case "as":
+			if i+1 >= n {
+				return fmt.Errorf("缺少用户名")
+			}
+			user = args[i+1]
+			i += 2
+		case "at":
+			if i+1 >= n {
+				return fmt.Errorf("缺少目录")
+			}
+			dir = args[i+1]
+			i += 2
+		case "run":
+			if i+1 >= n {
+				return fmt.Errorf("缺少命令")
+			}
+			command = strings.Join(args[i+1:], " ")
+			i = n
+		default:
+			return fmt.Errorf("未知子命令: %s，可用: as, at, run", args[i])
 		}
-		command := strings.Join(args[1:], " ")
-		return executeRun(command)
-
-	default:
-		return fmt.Errorf("未知子命令: %s，可用: as, run", args[0])
 	}
+
+	if command == "" {
+		return fmt.Errorf("缺少 run 子命令")
+	}
+
+	return executeWithOptions(user, dir, command)
 }
 
 func (e *ExecuteCommand) Help() string {
 	return "以指定用户身份执行命令，或直接执行系统命令"
 }
 
-// executeAs 以指定用户执行命令
-func executeAs(player string, command string) error {
-	// 获取当前用户
+func executeWithOptions(user, dir, command string) error {
 	currentUser := os.Getenv("USER")
 	if currentUser == "" {
 		currentUser = os.Getenv("USERNAME")
 	}
 
-	// 是当前用户，直接执行
-	if player == currentUser || player == "@s" {
-		return executeRun(command)
-	}
+	// 确定是否切换用户
+	switchUser := user != "" && user != currentUser && user != "@s"
 
 	// 获取当前可执行文件路径
 	execPath, err := os.Executable()
@@ -66,42 +80,60 @@ func executeAs(player string, command string) error {
 		return fmt.Errorf("无法获取可执行文件路径: %v", err)
 	}
 
-	// 使用 sudo 重新调用自身执行命令
-	cmd := exec.Command("sudo", "-u", player, execPath, "-c", command)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	// 如果需要切换用户
+	if switchUser {
+		// 构建命令：先 cd 到指定目录（如果有），再执行 mineshell -c
+		var cmdStr string
+		if dir != "" {
+			cmdStr = fmt.Sprintf("cd %s && %s -c %s", shellQuote(dir), execPath, shellQuote(command))
+		} else {
+			cmdStr = fmt.Sprintf("%s -c %s", execPath, shellQuote(command))
+		}
+		cmd := exec.Command("sudo", "-u", user, "sh", "-c", cmdStr)
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		return cmd.Run()
+	}
 
-	return cmd.Run()
-}
+	// 不切换用户，当前进程执行
+	// 处理目录切换
+	var oldDir string
+	if dir != "" {
+		oldDir, err = os.Getwd()
+		if err != nil {
+			return fmt.Errorf("获取当前目录失败: %v", err)
+		}
+		if err := os.Chdir(dir); err != nil {
+			return fmt.Errorf("切换目录到 %s 失败: %v", dir, err)
+		}
+		defer os.Chdir(oldDir)
+	}
 
-// executeRun 直接执行命令
-func executeRun(command string) error {
-	// 先尝试解析为 MineShell 内建命令
+	// 执行命令（内建或外部）
 	parts := strings.Fields(command)
 	if len(parts) == 0 {
 		return fmt.Errorf("没有指定命令")
 	}
-
 	cmdName := parts[0]
-	args := parts[1:]
+	cmdArgs := parts[1:]
 
-	// 检查是否是内建命令
 	if cmd, exists := GetCommand(cmdName); exists {
-		// 内建命令直接执行
-		return cmd.Execute(args)
+		return cmd.Execute(cmdArgs)
 	}
 
-	// 不是内建命令，作为系统命令执行
 	cmdPath, err := exec.LookPath(cmdName)
 	if err != nil {
 		return fmt.Errorf("找不到命令: %s", cmdName)
 	}
-
-	sysCmd := exec.Command(cmdPath, args...)
+	sysCmd := exec.Command(cmdPath, cmdArgs...)
 	sysCmd.Stdin = os.Stdin
 	sysCmd.Stdout = os.Stdout
 	sysCmd.Stderr = os.Stderr
-
 	return sysCmd.Run()
+}
+
+// shellQuote 简单对字符串加引号，避免空格问题
+func shellQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", "'\\''") + "'"
 }
