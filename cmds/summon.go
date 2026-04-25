@@ -65,6 +65,7 @@ func summonFile(node *parser.Node) error {
 		}
 	}
 
+	fmt.Printf("召唤了新的%s\n", name)
 	return os.WriteFile(name, []byte(content), mode)
 }
 
@@ -92,6 +93,6 @@ func summonProcess(node *parser.Node) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	fmt.Println("生成了新的", command)
+	fmt.Println("召唤了新的", command)
 	return cmd.Start()
 }
