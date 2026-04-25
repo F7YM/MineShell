@@ -1,6 +1,6 @@
 # 编译产物
-MineShell
-MineShell.exe
+mineshell
+mineshell.exe
 *.exe
 *.test
 *.out
