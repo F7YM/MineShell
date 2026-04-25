@@ -1,3 +1,4 @@
+// cmds/help.go
 package cmds
 
 import (
@@ -16,6 +17,18 @@ func (h *HelpCommand) Name() string {
 }
 
 func (h *HelpCommand) Execute(args []string) error {
+	if len(args) > 0 {
+		// help <命令名> 显示具体命令的帮助
+		for _, cmdName := range args {
+			if cmd, exists := GetCommand(cmdName); exists {
+				fmt.Printf("%s\n  用法: %s\n", cmd.Name(), cmd.Help())
+			} else {
+				fmt.Printf("未知命令: %s\n", cmdName)
+			}
+		}
+		return nil
+	}
+
 	fmt.Println("可用的内建命令:")
 
 	commands := GetAllCommands()
@@ -25,11 +38,11 @@ func (h *HelpCommand) Execute(args []string) error {
 	})
 
 	for _, cmd := range commands {
-		fmt.Printf("  %-10s %s\n", cmd.Name(), cmd.Help())
+		fmt.Printf("  %s\n", cmd.Help())
 	}
 	return nil
 }
 
 func (h *HelpCommand) Help() string {
-	return "显示帮助信息"
+	return "help [命令名]  -  显示帮助信息"
 }

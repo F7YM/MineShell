@@ -1,3 +1,4 @@
+// cmds/say.go
 package cmds
 
 import (
@@ -28,5 +29,5 @@ func (s *SayCommand) Execute(args []string) error {
 }
 
 func (s *SayCommand) Help() string {
-	return "在屏幕上显示一条消息"
+	return "say <消息>  -  在屏幕上显示一条消息"
 }

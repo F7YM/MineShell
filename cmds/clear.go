@@ -1,3 +1,4 @@
+// cmds/clear.go
 package cmds
 
 import (
@@ -33,5 +34,5 @@ func (c *ClearCommand) Execute(args []string) error {
 }
 
 func (c *ClearCommand) Help() string {
-	return "清空屏幕"
+	return "clear  -  清空屏幕"
 }

@@ -1,3 +1,4 @@
+// cmds/tp.go
 package cmds
 
 import (
@@ -17,7 +18,7 @@ func (t *TPCommand) Name() string {
 
 func (t *TPCommand) Execute(args []string) error {
 	if len(args) < 1 {
-		return fmt.Errorf("用法: tp <目录路径>")
+		return fmt.Errorf("用法: tp <目录>")
 	}
 
 	path := args[0]
@@ -31,12 +32,11 @@ func (t *TPCommand) Execute(args []string) error {
 
 	err := os.Chdir(path)
 	if err != nil {
-		return fmt.Errorf("无法进入: %v", err)
+		return fmt.Errorf("无法进入 %s: %v", path, err)
 	}
-
 	return nil
 }
 
 func (t *TPCommand) Help() string {
-	return "切换工作目录"
+	return "tp <目录>  -  切换工作目录"
 }

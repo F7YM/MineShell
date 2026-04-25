@@ -23,16 +23,15 @@ func (s *SummonCommand) Name() string {
 
 func (s *SummonCommand) Execute(args []string) error {
 	if len(args) < 2 {
-		return fmt.Errorf("用法: summon <实体类型> <NBT>\n用法:\n  summon file {name:\"filename\", content:\"text\", mode:644}\n  summon process {command:\"ls\", args:[\"-la\", \"-h\"]}")
+		return fmt.Errorf("用法: summon <file|process> <NBT>")
 	}
 
 	entityType := args[0]
 	nbtStr := strings.Join(args[1:], " ")
 
-	// 解析 SNBT
 	node, err := nbt.ParseSNBT(nbtStr)
 	if err != nil {
-		return fmt.Errorf("SNBT 解析失败: %v", err)
+		return fmt.Errorf("NBT 解析失败: %v", err)
 	}
 
 	switch entityType {
@@ -46,20 +45,20 @@ func (s *SummonCommand) Execute(args []string) error {
 }
 
 func (s *SummonCommand) Help() string {
-	return "创建实体 (文件/进程)"
+	return "summon file {name:\"文件\", content:\"内容\", mode:644}  -  创建文件\n" +
+		"       summon process {command:\"命令\", args:[\"参数1\",\"参数2\"]}  -  启动进程"
 }
 
 func summonFile(node *nbt.Node) error {
 	name, ok := node.GetString("name")
 	if !ok {
-		return fmt.Errorf("缺少 'name' 字段 (字符串)")
+		return fmt.Errorf("缺少 'name' 字段")
 	}
 
 	content, _ := node.GetString("content")
 
 	mode := os.FileMode(0644)
 	if m, ok := node.GetInt("mode"); ok {
-		// 八进制模式解析
 		modeStr := fmt.Sprintf("%o", m)
 		parsed, err := strconv.ParseUint(modeStr, 8, 32)
 		if err == nil {
@@ -73,7 +72,7 @@ func summonFile(node *nbt.Node) error {
 func summonProcess(node *nbt.Node) error {
 	command, ok := node.GetString("command")
 	if !ok {
-		return fmt.Errorf("缺少 'command' 字段 (字符串)")
+		return fmt.Errorf("缺少 'command' 字段")
 	}
 
 	var cmdArgs []string
@@ -94,6 +93,6 @@ func summonProcess(node *nbt.Node) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	fmt.Println("召唤了新的", command)
+	fmt.Println("生成了新的", command)
 	return cmd.Start()
 }
