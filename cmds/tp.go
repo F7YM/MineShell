@@ -1,4 +1,3 @@
-// cmds/tp.go
 package cmds
 
 import (

@@ -1,4 +1,3 @@
-// cmds/clear.go
 package cmds
 
 import (

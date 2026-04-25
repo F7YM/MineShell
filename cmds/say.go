@@ -1,4 +1,3 @@
-// cmds/say.go
 package cmds
 
 import (

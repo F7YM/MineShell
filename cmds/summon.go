@@ -1,4 +1,3 @@
-// cmds/summon.go
 package cmds
 
 import (
@@ -8,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/F7YM/MineShell/nbt"
+	"github.com/F7YM/MineShell/parser"
 )
 
 type SummonCommand struct{}
@@ -29,7 +28,7 @@ func (s *SummonCommand) Execute(args []string) error {
 	entityType := args[0]
 	nbtStr := strings.Join(args[1:], " ")
 
-	node, err := nbt.ParseSNBT(nbtStr)
+	node, err := parser.ParseSNBT(nbtStr)
 	if err != nil {
 		return fmt.Errorf("NBT 解析失败: %v", err)
 	}
@@ -49,7 +48,7 @@ func (s *SummonCommand) Help() string {
 		"       summon process {command:\"命令\", args:[\"参数1\",\"参数2\"]}  -  启动进程"
 }
 
-func summonFile(node *nbt.Node) error {
+func summonFile(node *parser.Node) error {
 	name, ok := node.GetString("name")
 	if !ok {
 		return fmt.Errorf("缺少 'name' 字段")
@@ -69,7 +68,7 @@ func summonFile(node *nbt.Node) error {
 	return os.WriteFile(name, []byte(content), mode)
 }
 
-func summonProcess(node *nbt.Node) error {
+func summonProcess(node *parser.Node) error {
 	command, ok := node.GetString("command")
 	if !ok {
 		return fmt.Errorf("缺少 'command' 字段")
@@ -78,7 +77,7 @@ func summonProcess(node *nbt.Node) error {
 	var cmdArgs []string
 	if argsNode, ok := node.GetArray("args"); ok {
 		for _, arg := range argsNode {
-			if arg.Type == nbt.TypeString {
+			if arg.Type == parser.TypeString {
 				cmdArgs = append(cmdArgs, arg.Value.(string))
 			} else {
 				cmdArgs = append(cmdArgs, fmt.Sprint(arg.Value))

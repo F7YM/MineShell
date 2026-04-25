@@ -1,4 +1,3 @@
-// cmds/help.go
 package cmds
 
 import (

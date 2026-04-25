@@ -1,4 +1,3 @@
-// cmds/execute.go
 package cmds
 
 import (

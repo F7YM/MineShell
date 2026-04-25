@@ -1,4 +1,3 @@
-// cmds/function.go
 package cmds
 
 import (

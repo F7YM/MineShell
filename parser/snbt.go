@@ -1,4 +1,4 @@
-package nbt
+package parser
 
 import (
 	"fmt"
