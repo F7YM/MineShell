@@ -19,5 +19,6 @@ build/
 *.swp
 *~
 
-# 自用脚本
+# 测试文件
 pf.py
+test.mcfunction
