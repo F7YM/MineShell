@@ -1,9 +1,9 @@
 # 编译产物
 mineshell
-mineshell.exe
 *.exe
 *.test
 *.out
+build/
 
 # IDE - VSCode
 .vscode/
